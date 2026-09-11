@@ -1,0 +1,27 @@
+# REGLAS DEL PROYECTO & DESIGN SYSTEM
+
+## 1. STACK & ARQUITECTURA
+
+- Frontend: React + Vite + Tailwind CSS v3.
+- Idioma de la interfaz y comentarios: Español.
+
+## 2. DESIGN SYSTEM & TOKENS (FIGMA)
+
+- Tipografía Principal: `font-poppins`.
+- Paleta Primaria (Green): `green-500` (#1F9252), `green-400` (#4CA875).
+- Paleta Secundaria (Purple): `purple-500` (#8E4F7D), `purple-400` (#A57297).
+- Fondos y Neutros (Grays): Fondo principal `bg-gray-13` (#0B1312), Tarjetas `bg-gray-12` (#0F1917), Bordes `border-gray-9` (#1B2D2A), Texto claro `text-gray-1` (#FFFFFF).
+- Escala de Texto: Usar exclusivamente clases extendidas (`text-h1`, `text-h2`, `text-h3`, `text-h4`, `text-h5`, `text-body-reg`, `text-body-bold`, `text-caption`).
+
+## 3. REGLAS DE DESARROLLO
+
+- MANTENER la modularidad de componentes dentro de `src/components/`.
+- RESPETAR el flujo de datos y estados de React sin romper componentes existentes.
+- NO agregar frameworks de estilos externos; usar únicamente las clases utilitarias de Tailwind configuradas.
+
+## 4. REGLAS DE EJECUCIÓN Y CONSUMO DE TOKENS
+
+- NO ejecutes comandos de testing visual ni abras el navegador automáticamente.
+- NO realices capturas de pantalla (screenshots) del DOM.
+- Limítate a editar o crear los archivos de código solicitados de forma directa.
+- La validación visual en el navegador la realizará el usuario manualmente.

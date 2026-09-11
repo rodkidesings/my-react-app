@@ -1,23 +1,34 @@
-export default function Navbar() {
+import brandLogo from '../assets/images/Rodolfo-Serra-Logo.svg'
+
+
+export default function Navbar({ onOpenQuote }) {
   return (
-    <header className="w-full border-b border-slate-800/80 bg-slate-900/60 backdrop-blur-xl sticky top-0 z-50">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="h-9 w-9 rounded-xl bg-gradient-to-tr from-cyan-500 to-indigo-500 flex items-center justify-center shadow-lg shadow-indigo-500/25">
-            <span className="font-bold text-white text-lg tracking-tight">R</span>
-          </div>
-          <div>
-            <h1 className="text-sm font-semibold text-white tracking-wide">React + Vite</h1>
-            <p className="text-xs text-slate-400">Tailwind CSS v3 Setup</p>
-          </div>
+    <header className="w-full border-b border-gray-9 bg-gray-13/80 backdrop-blur-md sticky top-0 z-50 font-poppins">
+      <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <a href="#" className="flex items-center">
+          <img 
+            src={brandLogo} 
+            alt="Rodolfo Serra Logo" 
+            className="h-8 w-auto object-contain"
+          />
+        </a>
         </div>
 
-        <div className="flex items-center gap-3">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-            Listo para producción
-          </span>
-        </div>
+        <nav className="hidden md:flex items-center gap-8 text-caption-bold text-gray-5">
+          <a href="#hero" className="hover:text-green-400 transition-colors">Home</a>
+          <a href="#process" className="hover:text-green-400 transition-colors">Work Process</a>
+          <a href="#services" className="hover:text-green-400 transition-colors">Services</a>
+          <a href="#about" className="text-gray-4 hover:text-green-400 transition-colors">About</a>
+        </nav>
+
+        {/* Botón que dispara el Wizard */}
+        <button
+          onClick={onOpenQuote}
+          className="bg-green-500 hover:bg-green-600 text-gray-1 text-caption-bold px-4 py-2 rounded-lg transition-all shadow-md shadow-green-500/20"
+        >
+          Get a Quote
+        </button>
       </div>
     </header>
   )
