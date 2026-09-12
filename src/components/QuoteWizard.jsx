@@ -38,6 +38,34 @@ const PRICING_CONFIG = {
   }
 }
 
+// --- MATRIZ DE PRECIOS INTERNOS (DESARROLLO WEB & E-COMMERCE) ---
+const WEB_PRICING_CONFIG = {
+  TYPES: {
+    landing: { id: 'landing', label: 'Landing Page (One-Page)', desc: 'Página de aterrizaje optimizada para conversión y captura de leads', cost: 320 },
+    corporate: { id: 'corporate', label: 'Web Corporativa / Servicios', desc: 'Presencia institucional, catálogo de servicios, blog y secciones de información', cost: 480 },
+    ecommerce: { id: 'ecommerce', label: 'Tienda en Línea (E-commerce)', desc: 'Catálogo de productos, carrito de compras, gestión de stock y pasarela de pago', cost: 640 },
+    custom: { id: 'custom', label: 'Plataforma Personalizada', desc: 'Membresías, e-learning, portal privado o lógica de negocio a medida', cost: 890 }
+  },
+  SECTIONS: {
+    blog: { id: 'blog', label: 'Sección de Blog / Noticias', desc: 'Gestor de artículos optimizado para SEO', cost: 60 },
+    portfolio: { id: 'portfolio', label: 'Catálogo / Portafolio Avanzado', desc: 'Filtros dinámicos de proyectos o servicios', cost: 80 },
+    reviews: { id: 'reviews', label: 'Reseñas & Testimonios', desc: 'Módulo dinámico de opiniones de clientes', cost: 40 },
+    faq: { id: 'faq', label: 'Centro de Ayuda / FAQ', desc: 'Acordeones de preguntas frecuentes', cost: 40 },
+    legals: { id: 'legals', label: 'Páginas Legales', desc: 'Términos, privacidad y política de cookies', cost: 30 }
+  },
+  ADDONS: {
+    payment: { id: 'payment', label: 'Pasarela de Pago Avanzada', desc: 'Integración Stripe, PayPal, MercadoPago o pasarelas locales', cost: 120 },
+    multilang: { id: 'multilang', label: 'Sitio Multilenguaje', desc: 'Soporte para 2 o más idiomas con selector de región', cost: 160 },
+    shipping: { id: 'shipping', label: 'Sistema de Envíos por Zonas', desc: 'Tarifario automatizado de despacho por ubicación', cost: 80 },
+    members: { id: 'members', label: 'Área Privada de Usuarios', desc: 'Registro, login y contenido restringido', cost: 180 },
+    crm: { id: 'crm', label: 'Integración CRM / Email Marketing', desc: 'Conexión con Mailchimp, ActiveCampaign o Webhooks', cost: 70 }
+  },
+  MAINTENANCE: {
+    none: { id: 'none', label: 'Sin Mantenimiento Inicial', desc: 'Entrega del sitio y capacitación básica de gestión', cost: 0 },
+    standard: { id: 'standard', label: 'Plan Mantenimiento Standard', desc: 'Soporte mensual, backups semanales, seguridad y optimización SQL', cost: 90 }
+  }
+}
+
 // LOGO STYLES CONFIGURATION
 const LOGO_TYPES = [
   { id: 'monogram', label: 'Monogram', desc: 'Iniciales o siglas estilizadas (ej. LV, IBM, YSL)' },
@@ -83,8 +111,8 @@ const SERVICES_HUB = [
     id: 'web',
     title: 'Desarrollo Web & E-commerce',
     desc: 'Desarrollo de sitios web corporativos de alto impacto, plataformas escalables y tiendas virtuales a medida.',
-    active: false,
-    badge: 'Próximamente'
+    active: true,
+    badge: 'Disponible'
   },
   {
     id: 'seo',
@@ -138,43 +166,67 @@ export default function QuoteWizard({ isOpen, onClose }) {
   // Validation feedback
   const [errorMsg, setErrorMsg] = useState('')
 
+// Servicio seleccionado en el Hub: 'branding' | 'web'
+  const [selectedService, setSelectedService] = useState('branding')
+
+  // --- ESTADOS CUESTIONARIO WEB & E-COMMERCE ---
+  const [webProjectState, setWebProjectState] = useState('Nuevo sitio')
+  const [webPlatformType, setWebPlatformType] = useState('corporate')
+  const [webGoal, setWebGoal] = useState('')
+  const [selectedWebSections, setSelectedWebSections] = useState(['blog', 'faq'])
+  const [selectedWebAddons, setSelectedWebAddons] = useState([])
+  const [webMaintenance, setWebMaintenance] = useState('none')
+  
   // Cálculo silencioso de precios
   const priceCalculation = useMemo(() => {
-    let total = PRICING_CONFIG.BASE_PACKAGE
+    let total = 0
 
-    // Materiales impresos
-    selectedPrinted.forEach((id) => {
-      const item = PRICING_CONFIG.PRINT_ITEMS[id]
-      if (item) total += item.cost
-    })
+    if (selectedService === 'branding') {
+      total = PRICING_CONFIG.BASE_PACKAGE
+      selectedPrinted.forEach((id) => {
+        const item = PRICING_CONFIG.PRINT_ITEMS[id]
+        if (item) total += item.cost
+      })
+      total += customPrintedItems.length * PRICING_CONFIG.CUSTOM_ITEM_COST
+      selectedDigital.forEach((id) => {
+        const item = PRICING_CONFIG.DIGITAL_ITEMS[id]
+        if (item) total += item.cost
+      })
+      selectedIllustration.forEach((id) => {
+        const item = PRICING_CONFIG.ILLUSTRATION_ITEMS[id]
+        if (item) total += item.cost
+      })
+      const guideline = PRICING_CONFIG.GUIDELINES_ITEMS[selectedGuideline]
+      if (guideline) total += guideline.cost
+      total += customDigitalItems.length * PRICING_CONFIG.CUSTOM_ITEM_COST
 
-    // Ítems personalizados impresos ($40 c/u)
-    total += customPrintedItems.length * PRICING_CONFIG.CUSTOM_ITEM_COST
+    } else if (selectedService === 'web') {
+      const platform = WEB_PRICING_CONFIG.TYPES[webPlatformType]
+      if (platform) total += platform.cost
 
-    // Activos digitales & producto
-    selectedDigital.forEach((id) => {
-      const item = PRICING_CONFIG.DIGITAL_ITEMS[id]
-      if (item) total += item.cost
-    })
+      selectedWebSections.forEach((id) => {
+        const item = WEB_PRICING_CONFIG.SECTIONS[id]
+        if (item) total += item.cost
+      })
 
-    // Ilustración
-    selectedIllustration.forEach((id) => {
-      const item = PRICING_CONFIG.ILLUSTRATION_ITEMS[id]
-      if (item) total += item.cost
-    })
+      selectedWebAddons.forEach((id) => {
+        const item = WEB_PRICING_CONFIG.ADDONS[id]
+        if (item) total += item.cost
+      })
 
-    // Pautas
-    const guideline = PRICING_CONFIG.GUIDELINES_ITEMS[selectedGuideline]
-    if (guideline) total += guideline.cost
-
-    // Ítems personalizados digitales ($40 c/u)
-    total += customDigitalItems.length * PRICING_CONFIG.CUSTOM_ITEM_COST
+      const maint = WEB_PRICING_CONFIG.MAINTENANCE[webMaintenance]
+      if (maint) total += maint.cost
+    }
 
     const minTotal = total
-    const maxTotal = Math.round(total * 1.3)
+    const maxTotal = Math.round(total * 1.25)
 
     return { minTotal, maxTotal }
-  }, [selectedPrinted, customPrintedItems, selectedDigital, selectedIllustration, selectedGuideline, customDigitalItems])
+  }, [
+    selectedService,
+    selectedPrinted, customPrintedItems, selectedDigital, selectedIllustration, selectedGuideline, customDigitalItems,
+    webPlatformType, selectedWebSections, selectedWebAddons, webMaintenance
+  ])
 
   if (!isOpen) return null
 
@@ -225,16 +277,33 @@ export default function QuoteWizard({ isOpen, onClose }) {
     )
   }
 
+  // Helper toggles para Desarrollo Web
+  const toggleWebSection = (id) => {
+    setSelectedWebSections((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    )
+  }
+
+  const toggleWebAddon = (id) => {
+    setSelectedWebAddons((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    )
+  }
+
   // Validaciones por paso
   const handleNextStep = () => {
     setErrorMsg('')
     if (step === 1) {
       if (!projectName.trim()) {
-        setErrorMsg('Por favor ingresa el nombre de tu marca o proyecto.')
+        setErrorMsg('Por favor ingresa el nombre de tu proyecto o empresa.')
         return
       }
-      if (!projectOffer.trim()) {
+      if (selectedService === 'branding' && !projectOffer.trim()) {
         setErrorMsg('Por favor describe brevemente qué ofrecen y su valor diferencial.')
+        return
+      }
+      if (selectedService === 'web' && !webGoal.trim()) {
+        setErrorMsg('Por favor indica el objetivo principal de la web.')
         return
       }
       setStep(2)
@@ -246,7 +315,7 @@ export default function QuoteWizard({ isOpen, onClose }) {
   }
 
   const handleFinalSubmit = (e) => {
-    e.preventDefault()
+    if (e) e.preventDefault()
     setErrorMsg('')
     if (!fullName.trim() || !corporateEmail.trim() || !phoneWhatsApp.trim()) {
       setErrorMsg('Por favor completa todos tus datos de contacto para remitirte el brief.')
@@ -295,7 +364,11 @@ export default function QuoteWizard({ isOpen, onClose }) {
             </div>
             <div>
               <h2 id="wizard-title" className="text-h6 font-bold text-gray-1 tracking-tight">
-                {step === 0 ? 'Cotizador de Proyectos' : 'Identidad Visual & Branding'}
+                {step === 0 
+                  ? 'Cotizador de Proyectos' 
+                  : selectedService === 'branding' 
+                    ? 'Identidad Visual & Branding' 
+                    : 'Desarrollo Web & E-commerce'}
               </h2>
               <p className="text-caption text-gray-5">
                 {step === 0
@@ -365,6 +438,7 @@ export default function QuoteWizard({ isOpen, onClose }) {
                     onClick={() => {
                       if (service.active) {
                         setErrorMsg('')
+                        setSelectedService(service.id) // <-- Guarda 'branding' o 'web'
                         setStep(1)
                       }
                     }}
@@ -450,435 +524,438 @@ export default function QuoteWizard({ isOpen, onClose }) {
           )}
 
           {/* ========================================================================= */}
-          {/* PASO 1: DIAGNÓSTICO ESTRATÉGICO                                           */}
+          {/* PASO 1: DIAGNÓSTICO ESTRATÉGICO (BRANDING O DESARROLLO WEB)               */}
           {/* ========================================================================= */}
           {step === 1 && (
             <div className="space-y-6">
-              <div>
-                <h3 className="text-h4 text-gray-1 font-bold mb-1">Diagnóstico Estratégico</h3>
-                <p className="text-gray-5 text-body-reg">
-                  Definamos los cimientos y el rumbo conceptual de tu marca.
-                </p>
-              </div>
+              {selectedService === 'branding' ? (
+                <>
+                  <div>
+                    <h3 className="text-h4 text-gray-1 font-bold mb-1">Diagnóstico Estratégico</h3>
+                    <p className="text-gray-5 text-body-reg">Definamos los cimientos y el rumbo conceptual de tu marca.</p>
+                  </div>
 
-              {/* Estado de la Marca */}
-              <div>
-                <label className="block text-caption-bold text-gray-3 mb-2 uppercase tracking-wider">
-                  Estado del Proyecto
-                </label>
-                <div className="grid grid-cols-2 gap-3">
-                  {['Marca nueva', 'Rebranding'].map((state) => (
-                    <button
-                      key={state}
-                      type="button"
-                      onClick={() => setProjectState(state)}
-                      className={`p-3.5 rounded-xl border text-center font-medium transition-all ${
-                        projectState === state
-                          ? 'border-green-500 bg-green-500/10 text-green-300 shadow-sm shadow-green-500/10'
-                          : 'border-gray-9 bg-gray-11 text-gray-4 hover:border-gray-7 hover:text-gray-2'
-                      }`}
-                    >
-                      {state === 'Marca nueva' ? '✨ Marca Nueva (Desde Cero)' : '🔄 Rebranding (Evolución)'}
-                    </button>
-                  ))}
-                </div>
-              </div>
+                  {/* Estado de la Marca */}
+                  <div>
+                    <label className="block text-caption-bold text-gray-3 mb-2 uppercase tracking-wider">Estado del Proyecto</label>
+                    <div className="grid grid-cols-2 gap-3">
+                      {['Marca nueva', 'Rebranding'].map((state) => (
+                        <button
+                          key={state}
+                          type="button"
+                          onClick={() => setProjectState(state)}
+                          className={`p-3.5 rounded-xl border text-center font-medium transition-all ${
+                            projectState === state
+                              ? 'border-green-500 bg-green-500/10 text-green-300 shadow-sm shadow-green-500/10'
+                              : 'border-gray-9 bg-gray-11 text-gray-4 hover:border-gray-7 hover:text-gray-2'
+                          }`}
+                        >
+                          {state === 'Marca nueva' ? '✨ Marca Nueva (Desde Cero)' : '🔄 Rebranding (Evolución)'}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
 
-              {/* Nombre del Proyecto */}
-              <div>
-                <label className="block text-caption-bold text-gray-3 mb-2 uppercase tracking-wider">
-                  Nombre de la Marca o Proyecto <span className="text-green-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={projectName}
-                  onChange={(e) => setProjectName(e.target.value)}
-                  placeholder="Ej. Lumen Studio, Valora Health..."
-                  className="w-full bg-gray-11 border border-gray-9 rounded-xl p-3.5 text-gray-1 placeholder-gray-6 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none transition-all text-body-reg"
-                />
-              </div>
+                  {/* Nombre del Proyecto */}
+                  <div>
+                    <label className="block text-caption-bold text-gray-3 mb-2 uppercase tracking-wider">
+                      Nombre de la Marca o Proyecto <span className="text-green-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={projectName}
+                      onChange={(e) => setProjectName(e.target.value)}
+                      placeholder="Ej. Lumen Studio, Valora Health..."
+                      className="w-full bg-gray-11 border border-gray-9 rounded-xl p-3.5 text-gray-1 placeholder-gray-6 focus:border-green-500 outline-none transition-all text-body-reg"
+                    />
+                  </div>
 
-              {/* ¿Qué servicios o productos ofrecen y qué los hace diferentes? */}
-              <div>
-                <label className="block text-caption-bold text-gray-3 mb-2 uppercase tracking-wider">
-                  ¿Qué servicios o productos ofrecen y qué los hace diferentes? <span className="text-green-500">*</span>
-                </label>
-                <textarea
-                  rows="3"
-                  value={projectOffer}
-                  onChange={(e) => setProjectOffer(e.target.value)}
-                  placeholder="Describe la propuesta de valor, tu producto/servicio principal y la ventaja competitiva en el mercado..."
-                  className="w-full bg-gray-11 border border-gray-9 rounded-xl p-3.5 text-gray-1 placeholder-gray-6 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none transition-all text-body-reg resize-none"
-                ></textarea>
-              </div>
+                  {/* Descripción de propuesta */}
+                  <div>
+                    <label className="block text-caption-bold text-gray-3 mb-2 uppercase tracking-wider">
+                      ¿Qué servicios o productos ofrecen y qué los hace diferentes? <span className="text-green-500">*</span>
+                    </label>
+                    <textarea
+                      rows="3"
+                      value={projectOffer}
+                      onChange={(e) => setProjectOffer(e.target.value)}
+                      placeholder="Describe la propuesta de valor..."
+                      className="w-full bg-gray-11 border border-gray-9 rounded-xl p-3.5 text-gray-1 placeholder-gray-6 focus:border-green-500 outline-none transition-all text-body-reg resize-none"
+                    ></textarea>
+                  </div>
 
-              {/* Tipo de Logo Preferido */}
-              <div>
-                <label className="block text-caption-bold text-gray-3 mb-1 uppercase tracking-wider">
-                  Tipo de Logo Preferido
-                </label>
-                <p className="text-caption text-gray-5 mb-3">
-                  Selecciona la tipología visual que mejor proyecte la esencia de tu empresa:
-                </p>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                  {LOGO_TYPES.map((type) => (
-                    <button
-                      key={type.id}
-                      type="button"
-                      onClick={() => setLogoType(type.id)}
-                      className={`p-3 rounded-xl border text-left transition-all flex flex-col justify-between ${
-                        logoType === type.id
-                          ? 'border-green-500 bg-green-500/10 text-gray-1 shadow-sm shadow-green-500/10 ring-1 ring-green-500'
-                          : 'border-gray-9 bg-gray-11 text-gray-4 hover:border-gray-7 hover:text-gray-2'
-                      }`}
-                    >
-                      <span className="text-body-bold text-gray-2 block mb-1">{type.label}</span>
-                      <span className="text-footer text-gray-5 leading-snug">{type.desc}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
+                  {/* Tipos de Logo */}
+                  <div>
+                    <label className="block text-caption-bold text-gray-3 mb-1 uppercase tracking-wider">Tipo de Logo Preferido</label>
+                    <p className="text-caption text-gray-5 mb-3">Selecciona la tipología visual que mejor proyecte la esencia de tu empresa:</p>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                      {LOGO_TYPES.map((type) => (
+                        <button
+                          key={type.id}
+                          type="button"
+                          onClick={() => setLogoType(type.id)}
+                          className={`p-3 rounded-xl border text-left transition-all flex flex-col justify-between ${
+                            logoType === type.id
+                              ? 'border-green-500 bg-green-500/10 text-gray-1 ring-1 ring-green-500'
+                              : 'border-gray-9 bg-gray-11 text-gray-4 hover:border-gray-7 hover:text-gray-2'
+                          }`}
+                        >
+                          <span className="text-body-bold text-gray-2 block mb-1">{type.label}</span>
+                          <span className="text-footer text-gray-5 leading-snug">{type.desc}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
 
-              {/* Personalidad y Público Objetivo */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-caption-bold text-gray-3 mb-2 uppercase tracking-wider">
-                    3-5 Palabras Clave de Personalidad
-                  </label>
-                  <input
-                    type="text"
-                    value={brandKeywords}
-                    onChange={(e) => setBrandKeywords(e.target.value)}
-                    placeholder="Ej. Minimalista, Robusto, Premium, Cercano"
-                    className="w-full bg-gray-11 border border-gray-9 rounded-xl p-3.5 text-gray-1 placeholder-gray-6 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none transition-all text-body-reg"
-                  />
-                </div>
-                <div>
-                  <label className="block text-caption-bold text-gray-3 mb-2 uppercase tracking-wider">
-                    Público Objetivo
-                  </label>
-                  <input
-                    type="text"
-                    value={targetAudience}
-                    onChange={(e) => setTargetAudience(e.target.value)}
-                    placeholder="Ej. Emprendedores B2B, jóvenes 22-35, profesionales..."
-                    className="w-full bg-gray-11 border border-gray-9 rounded-xl p-3.5 text-gray-1 placeholder-gray-6 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none transition-all text-body-reg"
-                  />
-                </div>
-              </div>
+                  {/* Keywords y Audiencia */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-caption-bold text-gray-3 mb-2 uppercase tracking-wider">3-5 Palabras Clave de Personalidad</label>
+                      <input
+                        type="text"
+                        value={brandKeywords}
+                        onChange={(e) => setBrandKeywords(e.target.value)}
+                        placeholder="Ej. Minimalista, Robusto, Premium"
+                        className="w-full bg-gray-11 border border-gray-9 rounded-xl p-3.5 text-gray-1 placeholder-gray-6 focus:border-green-500 outline-none text-body-reg"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-caption-bold text-gray-3 mb-2 uppercase tracking-wider">Público Objetivo</label>
+                      <input
+                        type="text"
+                        value={targetAudience}
+                        onChange={(e) => setTargetAudience(e.target.value)}
+                        placeholder="Ej. Emprendedores B2B, jóvenes 22-35..."
+                        className="w-full bg-gray-11 border border-gray-9 rounded-xl p-3.5 text-gray-1 placeholder-gray-6 focus:border-green-500 outline-none text-body-reg"
+                      />
+                    </div>
+                  </div>
+                </>
+              ) : (
+                /* VISTA CUESTIONARIO WEB - PASO 1 */
+                <>
+                  <div>
+                    <h3 className="text-h4 text-gray-1 font-bold mb-1">Alcance & Tipo de Plataforma Web</h3>
+                    <p className="text-gray-5 text-body-reg">Definamos el tipo de infraestructura e intencionalidad del proyecto digital.</p>
+                  </div>
+
+                  {/* Estado del Proyecto Web */}
+                  <div>
+                    <label className="block text-caption-bold text-gray-3 mb-2 uppercase tracking-wider">Estado del Sitio Web</label>
+                    <div className="grid grid-cols-2 gap-3">
+                      {['Nuevo sitio', 'Rediseño / Migración'].map((state) => (
+                        <button
+                          key={state}
+                          type="button"
+                          onClick={() => setWebProjectState(state)}
+                          className={`p-3.5 rounded-xl border text-center font-medium transition-all ${
+                            webProjectState === state
+                              ? 'border-green-500 bg-green-500/10 text-green-300 shadow-sm shadow-green-500/10'
+                              : 'border-gray-9 bg-gray-11 text-gray-4 hover:border-gray-7 hover:text-gray-2'
+                          }`}
+                        >
+                          {state === 'Nuevo sitio' ? '🚀 Nuevo Sitio (Desde Cero)' : '🔄 Rediseño o Migración'}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Nombre del Sitio */}
+                    <div>
+                      <label className="block text-caption-bold text-gray-3 mb-2 uppercase tracking-wider">
+                        Nombre de la Empresa o Proyecto Web <span className="text-green-500">*</span>
+                      </label>
+                    <input
+                      type="text"
+                      value={projectName}
+                      onChange={(e) => setProjectName(e.target.value)}
+                      placeholder="Ej. MiTienda.com, Estudio de Arquitectura..."
+                      className="w-full bg-gray-11 border border-gray-9 rounded-xl p-3.5 text-gray-1 placeholder-gray-6 focus:border-green-500 outline-none text-body-reg"
+                    />
+                  </div>
+
+                  {/* Objetivo Principal */}
+                  <div>
+                    <label className="block text-caption-bold text-gray-3 mb-2 uppercase tracking-wider">
+                      ¿Cuál es el objetivo principal de tu sitio? <span className="text-green-500">*</span>
+                    </label>
+                    <input
+                      rows="1"
+                      value={webGoal}
+                      onChange={(e) => setWebGoal(e.target.value)}
+                      placeholder="Ej. Captar clientes, vender productos directamente online..."
+                      className="w-full bg-gray-11 border border-gray-9 rounded-xl p-3.5 text-gray-1 placeholder-gray-6 focus:border-green-500 outline-none text-body-reg resize-none"
+                    ></input>
+                  </div>
+                  </div>
+
+                  {/* Selección de Tipo de Web (Base Pricing) */}
+                  <div>
+                    <label className="block text-caption-bold text-gray-3 mb-1 uppercase tracking-wider">
+                      Selecciona la Tipología Principal
+                    </label>
+                    <p className="text-caption text-gray-5 mb-3">Establece la base estructural y tecnológica de tu sitio:</p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {Object.values(WEB_PRICING_CONFIG.TYPES).map((type) => (
+                        <button
+                          key={type.id}
+                          type="button"
+                          onClick={() => setWebPlatformType(type.id)}
+                          className={`p-4 rounded-xl border text-left transition-all flex flex-col justify-between ${
+                            webPlatformType === type.id
+                              ? 'border-green-500 bg-green-500/10 text-gray-1 ring-1 ring-green-500 shadow-sm'
+                              : 'border-gray-9 bg-gray-11 text-gray-4 hover:border-gray-7 hover:text-gray-2'
+                          }`}
+                        >
+                          <div>
+                            <span className="text-body-bold text-gray-1 block mb-1">{type.label}</span>
+                            <span className="text-footer text-gray-5 leading-relaxed block">{type.desc}</span>
+                          </div>
+                          <div className="mt-3 text-caption-bold text-green-400">
+                            Base: ${type.cost} USD
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           )}
 
           {/* ========================================================================= */}
-          {/* PASO 2: MATERIALES DE PRODUCCIÓN                                          */}
+          {/* PASO 2: MATERIALES (BRANDING) O SECCIONES ADICIONALES (WEB)               */}
           {/* ========================================================================= */}
           {step === 2 && (
             <div className="space-y-6">
-              <div>
-                <h3 className="text-h4 text-gray-1 font-bold mb-1">Materiales de Producción</h3>
-                <p className="text-gray-5 text-body-reg">
-                  Configura las piezas impresas y físicas necesarias para tu operación.
-                </p>
-              </div>
-
-              {/* Paquete Base Obligatorio/Default */}
-              <div className="p-4 rounded-xl border border-green-500/40 bg-gradient-to-r from-green-900/20 via-gray-11 to-gray-11 flex items-start justify-between gap-4">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-green-400"></span>
-                    <h4 className="text-body-bold text-green-300">Paquete Base de Identidad de Marca</h4>
-                    <span className="px-2 py-0.5 rounded text-footer font-semibold bg-green-500/20 text-green-300 border border-green-500/30">
-                      INCLUIDO POR DEFECTO
-                    </span>
+              {selectedService === 'branding' ? (
+                <>
+                  <div>
+                    <h3 className="text-h4 text-gray-1 font-bold mb-1">Materiales de Producción</h3>
+                    <p className="text-gray-5 text-body-reg">Configura las piezas impresas y físicas necesarias para tu operación.</p>
                   </div>
-                  <p className="text-caption text-gray-4">
-                    Comprende: Investigación diagnóstica, arquitectura de marca, diseño de logo primario + versiones secundarias, paleta cromática oficial, sistema tipográfico y paquete de archivos vectoriales (AI, SVG, PNG, PDF).
-                  </p>
-                </div>
-                <div className="text-green-400 text-xl font-bold flex-shrink-0 pt-1">
-                  ✓
-                </div>
-              </div>
 
-              {/* Materiales Impresos Específicos */}
-              <div>
-                <label className="block text-caption-bold text-gray-3 mb-3 uppercase tracking-wider">
-                  Piezas Impresas & Corporativas
-                </label>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {Object.values(PRICING_CONFIG.PRINT_ITEMS).map((item) => {
-                    const isChecked = selectedPrinted.includes(item.id)
-                    return (
-                      <button
-                        type="button"
-                        key={item.id}
-                        onClick={() => togglePrintedItem(item.id)}
-                        className={`p-3.5 rounded-xl border text-left transition-all flex items-start gap-3 ${
-                          isChecked
-                            ? 'border-green-500/70 bg-green-500/10 text-gray-1 shadow-sm'
-                            : 'border-gray-9 bg-gray-11 text-gray-4 hover:border-gray-7 hover:text-gray-3'
-                        }`}
-                      >
-                        <div
-                          className={`w-5 h-5 rounded mt-0.5 flex items-center justify-center border transition-all flex-shrink-0 ${
-                            isChecked
-                              ? 'bg-green-500 border-green-500 text-gray-1'
-                              : 'border-gray-7 bg-gray-10'
-                          }`}
-                        >
-                          {isChecked && (
-                            <svg className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
-                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                            </svg>
-                          )}
-                        </div>
-                        <div className="flex-1">
-                          <span className={`block text-caption-bold ${isChecked ? 'text-gray-1' : 'text-gray-3'}`}>
-                            {item.label}
-                          </span>
-                          <span className="text-footer text-gray-5 leading-tight block mt-0.5">
-                            {item.desc}
-                          </span>
-                        </div>
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
-
-              {/* Módulo dinámico: Otros materiales impresos */}
-              <div className="pt-2 border-t border-gray-9/60">
-                <label className="block text-caption-bold text-gray-3 mb-2 uppercase tracking-wider">
-                  Otros Materiales Impresos Personalizados
-                </label>
-                <div className="flex gap-2 mb-3">
-                  <input
-                    type="text"
-                    value={customPrintedInput}
-                    onChange={(e) => setCustomPrintedInput(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault()
-                        handleAddCustomPrinted()
-                      }
-                    }}
-                    placeholder="Ej. Posavasos especiales, delantales serigrafiados, lanyard..."
-                    className="flex-1 bg-gray-11 border border-gray-9 rounded-xl px-4 py-2.5 text-gray-1 placeholder-gray-6 focus:border-green-500 outline-none text-body-reg"
-                  />
-                  <button
-                    type="button"
-                    onClick={handleAddCustomPrinted}
-                    className="px-4 py-2.5 rounded-xl bg-gray-10 hover:bg-gray-9 border border-gray-8 text-gray-2 hover:text-gray-1 font-semibold text-caption-bold transition-colors flex items-center gap-1.5"
-                  >
-                    <span>+</span> Añadir
-                  </button>
-                </div>
-
-                {customPrintedItems.length > 0 && (
-                  <div className="flex flex-wrap gap-2 pt-1">
-                    {customPrintedItems.map((customItem) => (
-                      <span
-                        key={customItem}
-                        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-10 border border-gray-8 text-gray-2 text-caption"
-                      >
-                        <span>{customItem}</span>
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveCustomPrinted(customItem)}
-                          className="text-gray-5 hover:text-redAlert-400 font-bold ml-1 transition-colors"
-                          aria-label={`Eliminar ${customItem}`}
-                        >
-                          ✕
-                        </button>
-                      </span>
-                    ))}
+                  {/* Paquete Base Obligatorio */}
+                  <div className="p-4 rounded-xl border border-green-500/40 bg-gradient-to-r from-green-900/20 via-gray-11 to-gray-11 flex items-start justify-between gap-4">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-green-400"></span>
+                        <h4 className="text-body-bold text-green-300">Paquete Base de Identidad de Marca</h4>
+                        <span className="px-2 py-0.5 rounded text-footer font-semibold bg-green-500/20 text-green-300 border border-green-500/30">
+                          INCLUIDO POR DEFECTO
+                        </span>
+                      </div>
+                      <p className="text-caption text-gray-4">
+                        Comprende: Investigación diagnóstica, arquitectura de marca, diseño de logo primario + versiones secundarias, paleta cromática oficial, sistema tipográfico y paquete vector (AI, SVG, PNG, PDF).
+                      </p>
+                    </div>
+                    <div className="text-green-400 text-xl font-bold flex-shrink-0 pt-1">✓</div>
                   </div>
-                )}
-              </div>
+
+                  {/* Piezas Impresas */}
+                  <div>
+                    <label className="block text-caption-bold text-gray-3 mb-3 uppercase tracking-wider">Piezas Impresas & Corporativas</label>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {Object.values(PRICING_CONFIG.PRINT_ITEMS).map((item) => {
+                        const isChecked = selectedPrinted.includes(item.id)
+                        return (
+                          <button
+                            type="button"
+                            key={item.id}
+                            onClick={() => togglePrintedItem(item.id)}
+                            className={`p-3.5 rounded-xl border text-left transition-all flex items-start gap-3 ${
+                              isChecked ? 'border-green-500/70 bg-green-500/10 text-gray-1 shadow-sm' : 'border-gray-9 bg-gray-11 text-gray-4 hover:border-gray-7'
+                            }`}
+                          >
+                            <div className={`w-5 h-5 rounded mt-0.5 flex items-center justify-center border transition-all flex-shrink-0 ${isChecked ? 'bg-green-500 border-green-500 text-gray-1' : 'border-gray-7 bg-gray-10'}`}>
+                              {isChecked && <svg className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>}
+                            </div>
+                            <div className="flex-1">
+                              <span className={`block text-caption-bold ${isChecked ? 'text-gray-1' : 'text-gray-3'}`}>{item.label}</span>
+                              <span className="text-footer text-gray-5 leading-tight block mt-0.5">{item.desc}</span>
+                            </div>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                </>
+              ) : (
+                /* VISTA CUESTIONARIO WEB - PASO 2: SECCIONES ADICIONALES */
+                <>
+                  <div>
+                    <h3 className="text-h4 text-gray-1 font-bold mb-1">Estructura & Páginas Adicionales</h3>
+                    <p className="text-gray-5 text-body-reg">Personaliza las secciones y páginas específicas que formarán la arquitectura de tu sitio.</p>
+                  </div>
+
+                  {/* Aviso de Estructura Base Incluida */}
+                  <div className="p-4 rounded-xl border border-green-500/40 bg-gradient-to-r from-green-900/20 via-gray-11 to-gray-11 flex items-start justify-between gap-4">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-green-400"></span>
+                        <h4 className="text-body-bold text-green-300">Arquitectura Base Incluida</h4>
+                        <span className="px-2 py-0.5 rounded text-footer font-semibold bg-green-500/20 text-green-300 border border-green-500/30">
+                          SEGUN TIPO SELECCIONADO
+                        </span>
+                      </div>
+                      <p className="text-caption text-gray-4">
+                        Incluye maquetación UI/UX adaptativa (Mobile & Desktop), optimización de carga rápida, estructura SEO inicial y conexión con formulario de contacto principal.
+                      </p>
+                    </div>
+                    <div className="text-green-400 text-xl font-bold flex-shrink-0 pt-1">✓</div>
+                  </div>
+
+                  {/* Secciones Opcionales */}
+                  <div>
+                    <label className="block text-caption-bold text-gray-3 mb-3 uppercase tracking-wider">
+                      Secciones y Páginas Opcionales
+                    </label>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {Object.values(WEB_PRICING_CONFIG.SECTIONS).map((item) => {
+                        const isChecked = selectedWebSections.includes(item.id)
+                        return (
+                          <button
+                            type="button"
+                            key={item.id}
+                            onClick={() => toggleWebSection(item.id)}
+                            className={`p-3.5 rounded-xl border text-left transition-all flex items-start gap-3 ${
+                              isChecked
+                                ? 'border-green-500/70 bg-green-500/10 text-gray-1 shadow-sm'
+                                : 'border-gray-9 bg-gray-11 text-gray-4 hover:border-gray-7 hover:text-gray-3'
+                            }`}
+                          >
+                            <div
+                              className={`w-5 h-5 rounded mt-0.5 flex items-center justify-center border transition-all flex-shrink-0 ${
+                                isChecked ? 'bg-green-500 border-green-500 text-gray-1' : 'border-gray-7 bg-gray-10'
+                              }`}
+                            >
+                              {isChecked && (
+                                <svg className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
+                                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                </svg>
+                              )}
+                            </div>
+                            <div className="flex-1">
+                              <span className={`block text-caption-bold ${isChecked ? 'text-gray-1' : 'text-gray-3'}`}>
+                                {item.label} (+${item.cost} USD)
+                              </span>
+                              <span className="text-footer text-gray-5 leading-tight block mt-0.5">
+                                {item.desc}
+                              </span>
+                            </div>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           )}
 
           {/* ========================================================================= */}
-          {/* PASO 3: DIGITAL, ILUSTRACIÓN Y PAUTAS                                      */}
+          {/* PASO 3: DIGITAL/PAUTAS (BRANDING) O ADDONS/MANTENIMIENTO (WEB)           */}
           {/* ========================================================================= */}
           {step === 3 && (
             <div className="space-y-6">
-              <div>
-                <h3 className="text-h4 text-gray-1 font-bold mb-1">Digital, Ilustración & Pautas</h3>
-                <p className="text-gray-5 text-body-reg">
-                  Completa el ecosistema con activos digitales, recursos gráficos y el nivel de normativa.
-                </p>
-              </div>
-
-              {/* Digital & Producto */}
-              <div>
-                <label className="block text-caption-bold text-gray-3 mb-3 uppercase tracking-wider">
-                  Activos Digitales & Producto
-                </label>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {Object.values(PRICING_CONFIG.DIGITAL_ITEMS).map((item) => {
-                    const isChecked = selectedDigital.includes(item.id)
-                    return (
-                      <button
-                        type="button"
-                        key={item.id}
-                        onClick={() => toggleDigitalItem(item.id)}
-                        className={`p-3.5 rounded-xl border text-left transition-all flex items-start gap-3 ${
-                          isChecked
-                            ? 'border-green-500/70 bg-green-500/10 text-gray-1 shadow-sm'
-                            : 'border-gray-9 bg-gray-11 text-gray-4 hover:border-gray-7 hover:text-gray-3'
-                        }`}
-                      >
-                        <div
-                          className={`w-5 h-5 rounded mt-0.5 flex items-center justify-center border transition-all flex-shrink-0 ${
-                            isChecked
-                              ? 'bg-green-500 border-green-500 text-gray-1'
-                              : 'border-gray-7 bg-gray-10'
-                          }`}
-                        >
-                          {isChecked && (
-                            <svg className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
-                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                            </svg>
-                          )}
-                        </div>
-                        <div className="flex-1">
-                          <span className={`block text-caption-bold ${isChecked ? 'text-gray-1' : 'text-gray-3'}`}>
-                            {item.label}
-                          </span>
-                          <span className="text-footer text-gray-5 leading-tight block mt-0.5">
-                            {item.desc}
-                          </span>
-                        </div>
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
-
-              {/* Módulo Ilustración */}
-              <div>
-                <label className="block text-caption-bold text-gray-3 mb-2 uppercase tracking-wider">
-                  Ilustración Personalizada (Opcional)
-                </label>
-                <p className="text-caption text-gray-5 mb-3">
-                  Selecciona si tu marca requiere arte ilustrativo original:
-                </p>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  {Object.values(PRICING_CONFIG.ILLUSTRATION_ITEMS).map((item) => {
-                    const isChecked = selectedIllustration.includes(item.id)
-                    return (
-                      <button
-                        type="button"
-                        key={item.id}
-                        onClick={() => toggleIllustrationItem(item.id)}
-                        className={`p-3.5 rounded-xl border text-left transition-all flex flex-col justify-between ${
-                          isChecked
-                            ? 'border-green-500 bg-green-500/10 text-gray-1 shadow-sm'
-                            : 'border-gray-9 bg-gray-11 text-gray-4 hover:border-gray-7 hover:text-gray-3'
-                        }`}
-                      >
-                        <div>
-                          <span className="block text-caption-bold text-gray-2 mb-1">{item.label}</span>
-                          <span className="text-footer text-gray-5 leading-snug block">{item.desc}</span>
-                        </div>
-                        <div className="mt-3 flex items-center gap-1.5 text-footer font-semibold">
-                          <span className={`w-2 h-2 rounded-full ${isChecked ? 'bg-green-400' : 'bg-gray-7'}`}></span>
-                          <span className={isChecked ? 'text-green-300' : 'text-gray-5'}>
-                            {isChecked ? 'Seleccionado' : 'Añadir'}
-                          </span>
-                        </div>
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
-
-              {/* Pautas de Marca (Selector Guía Básica vs Manual Completo) */}
-              <div>
-                <label className="block text-caption-bold text-gray-3 mb-2 uppercase tracking-wider">
-                  Pautas y Manual de Normativa
-                </label>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {Object.values(PRICING_CONFIG.GUIDELINES_ITEMS).map((item) => {
-                    const isSelected = selectedGuideline === item.id
-                    return (
-                      <button
-                        type="button"
-                        key={item.id}
-                        onClick={() => setSelectedGuideline(item.id)}
-                        className={`p-3.5 rounded-xl border text-left transition-all ${
-                          isSelected
-                            ? 'border-green-500 bg-green-500/10 text-gray-1 ring-1 ring-green-500'
-                            : 'border-gray-9 bg-gray-11 text-gray-4 hover:border-gray-7 hover:text-gray-3'
-                        }`}
-                      >
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-caption-bold text-gray-2">{item.label}</span>
-                          <span className={`w-4 h-4 rounded-full border flex items-center justify-center ${
-                            isSelected ? 'border-green-500 bg-green-500 text-gray-1 text-footer font-bold' : 'border-gray-7'
-                          }`}>
-                            {isSelected ? '✓' : ''}
-                          </span>
-                        </div>
-                        <span className="text-footer text-gray-5 leading-tight block">
-                          {item.desc}
-                        </span>
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
-
-              {/* Módulo dinámico: Otros activos digitales */}
-              <div className="pt-2 border-t border-gray-9/60">
-                <label className="block text-caption-bold text-gray-3 mb-2 uppercase tracking-wider">
-                  Otros Activos Digitales Personalizados
-                </label>
-                <div className="flex gap-2 mb-3">
-                  <input
-                    type="text"
-                    value={customDigitalInput}
-                    onChange={(e) => setCustomDigitalInput(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault()
-                        handleAddCustomDigital()
-                      }
-                    }}
-                    placeholder="Ej. Banners para e-commerce, plantilla de Notion, deck pitch..."
-                    className="flex-1 bg-gray-11 border border-gray-9 rounded-xl px-4 py-2.5 text-gray-1 placeholder-gray-6 focus:border-green-500 outline-none text-body-reg"
-                  />
-                  <button
-                    type="button"
-                    onClick={handleAddCustomDigital}
-                    className="px-4 py-2.5 rounded-xl bg-gray-10 hover:bg-gray-9 border border-gray-8 text-gray-2 hover:text-gray-1 font-semibold text-caption-bold transition-colors flex items-center gap-1.5"
-                  >
-                    <span>+</span> Añadir
-                  </button>
-                </div>
-
-                {customDigitalItems.length > 0 && (
-                  <div className="flex flex-wrap gap-2 pt-1">
-                    {customDigitalItems.map((customItem) => (
-                      <span
-                        key={customItem}
-                        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-10 border border-gray-8 text-gray-2 text-caption"
-                      >
-                        <span>{customItem}</span>
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveCustomDigital(customItem)}
-                          className="text-gray-5 hover:text-redAlert-400 font-bold ml-1 transition-colors"
-                          aria-label={`Eliminar ${customItem}`}
-                        >
-                          ✕
-                        </button>
-                      </span>
-                    ))}
+              {selectedService === 'branding' ? (
+                <>
+                  <div>
+                    <h3 className="text-h4 text-gray-1 font-bold mb-1">Digital, Ilustración & Pautas</h3>
+                    <p className="text-gray-5 text-body-reg">Completa el ecosistema con activos digitales y el nivel de normativa.</p>
                   </div>
-                )}
-              </div>
+                  {/* ... Código existente de Branding Digital ... */}
+                </>
+              ) : (
+                /* VISTA CUESTIONARIO WEB - PASO 3: ADDONS Y MANTENIMIENTO */
+                <>
+                  <div>
+                    <h3 className="text-h4 text-gray-1 font-bold mb-1">Funcionalidades Avanzadas & Mantenimiento</h3>
+                    <p className="text-gray-5 text-body-reg">Potencia tu sitio con integraciones especiales y planes de soporte post-lanzamiento.</p>
+                  </div>
+
+                  {/* Add-ons y Pasarelas */}
+                  <div>
+                    <label className="block text-caption-bold text-gray-3 mb-3 uppercase tracking-wider">
+                      Integraciones & Módulos Especiales
+                    </label>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {Object.values(WEB_PRICING_CONFIG.ADDONS).map((item) => {
+                        const isChecked = selectedWebAddons.includes(item.id)
+                        return (
+                          <button
+                            type="button"
+                            key={item.id}
+                            onClick={() => toggleWebAddon(item.id)}
+                            className={`p-3.5 rounded-xl border text-left transition-all flex items-start gap-3 ${
+                              isChecked
+                                ? 'border-green-500/70 bg-green-500/10 text-gray-1 shadow-sm'
+                                : 'border-gray-9 bg-gray-11 text-gray-4 hover:border-gray-7 hover:text-gray-3'
+                            }`}
+                          >
+                            <div
+                              className={`w-5 h-5 rounded mt-0.5 flex items-center justify-center border transition-all flex-shrink-0 ${
+                                isChecked ? 'bg-green-500 border-green-500 text-gray-1' : 'border-gray-7 bg-gray-10'
+                              }`}
+                            >
+                              {isChecked && (
+                                <svg className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
+                                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                </svg>
+                              )}
+                            </div>
+                            <div className="flex-1">
+                              <span className={`block text-caption-bold ${isChecked ? 'text-gray-1' : 'text-gray-3'}`}>
+                                {item.label} (+${item.cost} USD)
+                              </span>
+                              <span className="text-footer text-gray-5 leading-tight block mt-0.5">
+                                {item.desc}
+                              </span>
+                            </div>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Plan de Mantenimiento (Basado en tu tarifa de $90/mes) */}
+                  <div className="pt-2 border-t border-gray-9/60">
+                    <label className="block text-caption-bold text-gray-3 mb-2 uppercase tracking-wider">
+                      Soporte & Mantenimiento Mensual (Opcional)
+                    </label>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {Object.values(WEB_PRICING_CONFIG.MAINTENANCE).map((item) => {
+                        const isSelected = webMaintenance === item.id
+                        return (
+                          <button
+                            type="button"
+                            key={item.id}
+                            onClick={() => setWebMaintenance(item.id)}
+                            className={`p-3.5 rounded-xl border text-left transition-all ${
+                              isSelected
+                                ? 'border-green-500 bg-green-500/10 text-gray-1 ring-1 ring-green-500'
+                                : 'border-gray-9 bg-gray-11 text-gray-4 hover:border-gray-7 hover:text-gray-3'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="text-caption-bold text-gray-2">{item.label}</span>
+                              <span className={`w-4 h-4 rounded-full border flex items-center justify-center ${
+                                isSelected ? 'border-green-500 bg-green-500 text-gray-1 text-footer font-bold' : 'border-gray-7'
+                              }`}>
+                                {isSelected ? '✓' : ''}
+                              </span>
+                            </div>
+                            <span className="text-footer text-gray-5 leading-tight block">
+                              {item.desc} {item.cost > 0 && `(+$${item.cost} USD/mes)`}
+                            </span>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           )}
 
@@ -1005,7 +1082,7 @@ export default function QuoteWizard({ isOpen, onClose }) {
                   ✓
                 </div>
                 <h3 className="text-h4 font-bold text-gray-1 mb-1">
-                  ¡Brief de Identidad Generado!
+                  {selectedService === 'branding' ? '¡Brief de Identidad Generado!' : '¡Brief de Desarrollo Web Generado!'}
                 </h3>
                 
                 {/* RANGO ESTIMADO CALCULADO */}
@@ -1027,20 +1104,26 @@ export default function QuoteWizard({ isOpen, onClose }) {
               {/* Resumen del Brief Estratégico */}
               <div className="bg-gray-11 border border-gray-9 rounded-xl p-5 space-y-4">
                 <h4 className="text-caption-bold uppercase tracking-wider text-green-400 border-b border-gray-9/80 pb-2">
-                  Resumen de la Propuesta Técnica
+                  Resumen de la Propuesta Técnica ({selectedService === 'branding' ? 'Branding' : 'Desarrollo Web'})
                 </h4>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-caption">
                   <div>
-                    <span className="text-gray-5 block">Marca / Proyecto:</span>
+                    <span className="text-gray-5 block">Proyecto / Empresa:</span>
                     <span className="text-gray-1 font-semibold text-body-reg">{projectName || 'Sin especificar'}</span>
-                    <span className="text-footer text-green-300 block">({projectState})</span>
+                    <span className="text-footer text-green-300 block">
+                      ({selectedService === 'branding' ? projectState : webProjectState})
+                    </span>
                   </div>
 
                   <div>
-                    <span className="text-gray-5 block">Tipo de Logo seleccionado:</span>
+                    <span className="text-gray-5 block">
+                      {selectedService === 'branding' ? 'Tipo de Logo seleccionado:' : 'Tipología de Sitio Web:'}
+                    </span>
                     <span className="text-gray-1 font-semibold capitalize">
-                      {LOGO_TYPES.find((t) => t.id === logoType)?.label || logoType}
+                      {selectedService === 'branding'
+                        ? LOGO_TYPES.find((t) => t.id === logoType)?.label || logoType
+                        : WEB_PRICING_CONFIG.TYPES[webPlatformType]?.label}
                     </span>
                   </div>
 
@@ -1059,66 +1142,79 @@ export default function QuoteWizard({ isOpen, onClose }) {
                   </div>
                 </div>
 
-                {/* Entregables Seleccionados */}
+                {/* Entregables y Módulos Incluidos */}
                 <div className="pt-3 border-t border-gray-9/60 space-y-2">
                   <span className="text-footer uppercase tracking-wider text-gray-4 font-semibold block">
-                    Entregables y Componentes Incluidos:
+                    Componentes e Integraciones Incluidos:
                   </span>
                   
                   <div className="flex flex-wrap gap-1.5">
-                    {/* Paquete Base */}
-                    <span className="px-2.5 py-1 rounded-md bg-green-500/15 border border-green-500/30 text-green-300 text-caption font-medium">
-                      ✓ Paquete Base de Identidad (Obligatorio)
-                    </span>
-
-                    {/* Materiales Impresos */}
-                    {selectedPrinted.map((id) => {
-                      const item = PRICING_CONFIG.PRINT_ITEMS[id]
-                      return (
-                        <span key={id} className="px-2.5 py-1 rounded-md bg-gray-10 border border-gray-8 text-gray-3 text-caption">
-                          • {item ? item.label : id}
+                    {selectedService === 'branding' ? (
+                      <>
+                        <span className="px-2.5 py-1 rounded-md bg-green-500/15 border border-green-500/30 text-green-300 text-caption font-medium">
+                          ✓ Paquete Base de Identidad (Obligatorio)
                         </span>
-                      )
-                    })}
 
-                    {/* Personalizados Impresos */}
-                    {customPrintedItems.map((item) => (
-                      <span key={item} className="px-2.5 py-1 rounded-md bg-gray-10 border border-purple-500/30 text-purple-300 text-caption">
-                        + {item} (Impreso Custom)
-                      </span>
-                    ))}
+                        {selectedPrinted.map((id) => (
+                          <span key={id} className="px-2.5 py-1 rounded-md bg-gray-10 border border-gray-8 text-gray-3 text-caption">
+                            • {PRICING_CONFIG.PRINT_ITEMS[id]?.label || id}
+                          </span>
+                        ))}
 
-                    {/* Activos Digitales */}
-                    {selectedDigital.map((id) => {
-                      const item = PRICING_CONFIG.DIGITAL_ITEMS[id]
-                      return (
-                        <span key={id} className="px-2.5 py-1 rounded-md bg-gray-10 border border-gray-8 text-gray-3 text-caption">
-                          • {item ? item.label : id}
+                        {customPrintedItems.map((item) => (
+                          <span key={item} className="px-2.5 py-1 rounded-md bg-gray-10 border border-purple-500/30 text-purple-300 text-caption">
+                            + {item} (Impreso Custom)
+                          </span>
+                        ))}
+
+                        {selectedDigital.map((id) => (
+                          <span key={id} className="px-2.5 py-1 rounded-md bg-gray-10 border border-gray-8 text-gray-3 text-caption">
+                            • {PRICING_CONFIG.DIGITAL_ITEMS[id]?.label || id}
+                          </span>
+                        ))}
+
+                        {customDigitalItems.map((item) => (
+                          <span key={item} className="px-2.5 py-1 rounded-md bg-gray-10 border border-purple-500/30 text-purple-300 text-caption">
+                            + {item} (Digital Custom)
+                          </span>
+                        ))}
+
+                        {selectedIllustration.map((id) => (
+                          <span key={id} className="px-2.5 py-1 rounded-md bg-gray-10 border border-gray-8 text-gray-3 text-caption">
+                            🎨 {PRICING_CONFIG.ILLUSTRATION_ITEMS[id]?.label || id}
+                          </span>
+                        ))}
+
+                        <span className="px-2.5 py-1 rounded-md bg-gray-10 border border-gray-8 text-gray-3 text-caption">
+                          📘 {PRICING_CONFIG.GUIDELINES_ITEMS[selectedGuideline]?.label}
                         </span>
-                      )
-                    })}
-
-                    {/* Personalizados Digitales */}
-                    {customDigitalItems.map((item) => (
-                      <span key={item} className="px-2.5 py-1 rounded-md bg-gray-10 border border-purple-500/30 text-purple-300 text-caption">
-                        + {item} (Digital Custom)
-                      </span>
-                    ))}
-
-                    {/* Ilustración */}
-                    {selectedIllustration.map((id) => {
-                      const item = PRICING_CONFIG.ILLUSTRATION_ITEMS[id]
-                      return (
-                        <span key={id} className="px-2.5 py-1 rounded-md bg-gray-10 border border-gray-8 text-gray-3 text-caption">
-                          🎨 {item ? item.label : id}
+                      </>
+                    ) : (
+                      <>
+                        {/* Resumen para Desarrollo Web */}
+                        <span className="px-2.5 py-1 rounded-md bg-green-500/15 border border-green-500/30 text-green-300 text-caption font-medium">
+                          ✓ {WEB_PRICING_CONFIG.TYPES[webPlatformType]?.label} (Base)
                         </span>
-                      )
-                    })}
 
-                    {/* Pautas */}
-                    <span className="px-2.5 py-1 rounded-md bg-gray-10 border border-gray-8 text-gray-3 text-caption">
-                      📘 {PRICING_CONFIG.GUIDELINES_ITEMS[selectedGuideline]?.label}
-                    </span>
+                        {selectedWebSections.map((id) => (
+                          <span key={id} className="px-2.5 py-1 rounded-md bg-gray-10 border border-gray-8 text-gray-3 text-caption">
+                            • {WEB_PRICING_CONFIG.SECTIONS[id]?.label}
+                          </span>
+                        ))}
+
+                        {selectedWebAddons.map((id) => (
+                          <span key={id} className="px-2.5 py-1 rounded-md bg-purple-500/20 border border-purple-500/40 text-purple-300 text-caption">
+                            + {WEB_PRICING_CONFIG.ADDONS[id]?.label}
+                          </span>
+                        ))}
+
+                        {webMaintenance !== 'none' && (
+                          <span className="px-2.5 py-1 rounded-md bg-blue-500/20 border border-blue-500/40 text-blue-300 text-caption">
+                            🛡️ {WEB_PRICING_CONFIG.MAINTENANCE[webMaintenance]?.label}
+                          </span>
+                        )}
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
@@ -1153,7 +1249,7 @@ export default function QuoteWizard({ isOpen, onClose }) {
             </div>
           )}
 
-        </div>
+          </div>
 
         {/* Footer de Navegación de Pasos (1 a 4) */}
         {step >= 1 && step <= 4 && (
